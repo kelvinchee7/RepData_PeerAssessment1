@@ -8,8 +8,8 @@ output:
 
 ## Loading and preprocessing the data
 
-```{r setup, results='hide'}
 
+```r
 # Disable scientific notation
 
 options(scipen = 1)
@@ -17,7 +17,26 @@ options(scipen = 1)
 # Load libraries
 
 library(tidyverse)
+```
 
+```
+## ── Attaching packages ───────────────────────────────────────────── tidyverse 1.2.1 ──
+```
+
+```
+## ✔ ggplot2 3.1.0     ✔ purrr   0.2.5
+## ✔ tibble  2.0.1     ✔ dplyr   0.7.8
+## ✔ tidyr   0.8.2     ✔ stringr 1.3.1
+## ✔ readr   1.3.1     ✔ forcats 0.3.0
+```
+
+```
+## ── Conflicts ──────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+```
+
+```r
 # Load data
 
 if(!file.exists("activity.csv")) {
@@ -25,51 +44,62 @@ if(!file.exists("activity.csv")) {
 }
 
 activity <- read_csv("activity.csv")
+```
 
+```
+## Parsed with column specification:
+## cols(
+##   steps = col_double(),
+##   date = col_date(format = ""),
+##   interval = col_double()
+## )
 ```
 
 ## What is mean total number of steps taken per day?
 
 *Calculate the total number of steps taken per day.*
 
-```{r Q1.1}
 
+```r
 activity.daily <- group_by(activity, date) %>% 
   summarize(steps = sum(steps))
-
 ```
 
 *Histogram of steps per day.*
 
-```{r Q1.2}
 
+```r
 ggplot(activity.daily, aes(steps)) + 
   geom_histogram(binwidth = 2000) +
   labs(title = "Histogram of Daily Steps",
        x     = "Daily Steps",
        y     = "Count") +
   theme_light()
+```
 
 ```
+## Warning: Removed 8 rows containing non-finite values (stat_bin).
+```
+
+![](PA1_template_files/figure-html/Q1.2-1.png)<!-- -->
 
 *Calculate mean and median of the total number of steps taken per day.*
 
-```{r Q1.3}
 
+```r
 daily.steps.mean   <- mean(activity.daily$steps,   na.rm = T)
 daily.steps.median <- median(activity.daily$steps, na.rm = T)
-
 ```
 
-- Mean of total number of steps taken per day: `r round(daily.steps.mean, 2)`
-- Median of the total number of steps taken per day: `r daily.steps.median`
+- Mean of total number of steps taken per day: 10766.19
+- Median of the total number of steps taken per day: 10765
 
 ## What is the average daily activity pattern?
 
 *Make a time series plot (i.e. type="l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).*
 
-```{r Q2.1}
 
+```r
 activity.interval <- group_by(activity, interval) %>% 
   summarize(avg.steps = mean(steps, na.rm = T))
 
@@ -79,31 +109,41 @@ ggplot(activity.interval, aes(interval, avg.steps)) +
        x     = "5-Minute Interval",
        y     = "Average Number of Steps") +
   theme_light()
-
 ```
+
+![](PA1_template_files/figure-html/Q2.1-1.png)<!-- -->
 
 *Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?*
 
-```{r Q2.2}
 
+```r
 knitr::kable(top_n(activity.interval, 1, avg.steps))
-
 ```
+
+
+
+ interval   avg.steps
+---------  ----------
+      835    206.1698
 
 ## Imputing missing values
 
 *Calculate total number of rows with NAs.*
 
-```{r Q3.1}
 
+```r
 summary(activity$steps)["NA's"]
+```
 
+```
+## NA's 
+## 2304
 ```
 
 *Devise a strategy for filling in all of the missing values in the dataset.*
 
-```{r Q3.2}
 
+```r
 # Impute NA as average between interval step counts
 
 activity <- mutate(activity, steps.imputed = NA) %>% 
@@ -149,23 +189,21 @@ rm(list = c("i",
             "next.steps",
             "previous.row",
             "previous.steps"))
-
 ```
 
 
 *Create a new dataset that is equal to the original dataset but with the missing data filled in.*
 
-```{r Q3.3}
 
+```r
 activity.imputed <- select(activity, steps.imputed, date, interval) %>% 
   rename(steps = steps.imputed)
-
 ```
 
 *Make a histogram of the total number of steps taken each day. Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?*
 
-```{r Q3.4, fig.width=10}
 
+```r
 # Prepare daily data for histogram comparing original and imputed data
 
 activity.daily.imputed <- group_by(activity.imputed, date) %>% 
@@ -197,7 +235,19 @@ ggplot(activity.daily.long, aes(steps, fill = data)) +
   facet_grid(. ~ data) +
   theme_light() +
   theme(legend.position = "none")
+```
 
+```
+## Warning: Removed 8 rows containing non-finite values (stat_bin).
+```
+
+```
+## Warning: Removed 8 rows containing non-finite values (stat_density).
+```
+
+![](PA1_template_files/figure-html/Q3.4-1.png)<!-- -->
+
+```r
 # Spread daily data frame to create summary table
 
 activity.daily.wide <- spread(activity.daily.long, data, steps) %>% 
@@ -206,8 +256,12 @@ activity.daily.wide <- spread(activity.daily.long, data, steps) %>%
 # Get mean and median summaries
 
 knitr::kable(summary(activity.daily.wide)[c(3,4), c(2,3)])
-
 ```
+
+     original.steps   imputed.steps 
+---  ---------------  --------------
+     Median :10765    Median :10395 
+     Mean   :10766    Mean   : 9354 
 
 - Mean and median values differ from the first part of the assignment—after imputation, mean and median values are smaller compared to the original data
 - Imputing missing data estimated zeros for almost all of the NAs, slightly shifting the distribution to the left
@@ -216,8 +270,8 @@ knitr::kable(summary(activity.daily.wide)[c(3,4), c(2,3)])
 
 *Create a new factor variable in the dataset with two levels, "weekday" and "weekend", indicating whether a given date is a weekday or weekend day.*
 
-```{r Q5.1}
 
+```r
 activity.weekdays.imputed <- mutate(activity, weekdays = weekdays(date)) %>% 
   
   # Create new column reclassifying M-F as weekday and S-S as weekend
@@ -227,13 +281,12 @@ activity.weekdays.imputed <- mutate(activity, weekdays = weekdays(date)) %>%
   select(-c(steps, weekdays)) %>% 
   rename(steps    = steps.imputed,
          weekdays = weekends)
-
 ```
 
 *Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).*
 
-```{r Q5.2}
 
+```r
 # Calculate interval averages for weekday and weekend data
 
 activity.weekdays.interval <- group_by(activity.weekdays.imputed,
@@ -249,5 +302,6 @@ ggplot(activity.weekdays.interval, aes(interval, avg.steps, color = weekdays)) +
        y     = "Average Number of Steps") +
   theme_light() +
   theme(legend.position = "none")
-
 ```
+
+![](PA1_template_files/figure-html/Q5.2-1.png)<!-- -->
